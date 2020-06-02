@@ -229,8 +229,8 @@ def _preprocess_data(data):
     Dropping features because they are highly correlated
     """
 
-    selected_features_BE = selected_features_BE.remove('No_of_Ratings')
-    selected_features_BE = selected_features_BE.remove('Is_user_frequent_Moderate')
+    # selected_features_BE.remove('No_of_Ratings')
+    # selected_features_BE.remove('Is_user_frequent_Moderate')
 
     predict_vector = predict_vector[selected_features_BE]
 
