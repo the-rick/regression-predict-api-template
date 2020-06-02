@@ -26,6 +26,7 @@ import numpy as np
 import pandas as pd
 import pickle
 import json
+import statsmodels.api as sm
 
 def _preprocess_data(data):
     """Private helper function to preprocess data for model prediction.
