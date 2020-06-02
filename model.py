@@ -60,9 +60,6 @@ def _preprocess_data(data):
 
     # ----------- Replace this code with your own preprocessing steps --------
     predict_vector = feature_vector_df
-
-    ############ Test dataset
-    # test_data = pd.read_csv('https://raw.githubusercontent.com/the-rick/regression_notebook_team17/master/data/Test.csv')
     
     ########### Rider dataset
     riders = pd.read_csv('https://raw.githubusercontent.com/the-rick/regression_notebook_team17/master/data/Riders.csv')
@@ -71,9 +68,6 @@ def _preprocess_data(data):
     train_data = pd.read_csv('https://raw.githubusercontent.com/the-rick/regression_notebook_team17/master/data/Train.csv')
     
     ######### merging datasets
-
-    #                                 TEST
-    # df2 = d = pd.merge(test_data,riders,on = 'Rider Id',how='left')
 
     #                                 TRAIN
     df = pd.merge(riders,train_data,on = 'Rider Id',how='left')
@@ -85,7 +79,6 @@ def _preprocess_data(data):
         return input_df
     
     df = drop_vehicle_type(df)                   # TRAIN DATA
-    # df2 = drop_vehicle_type(df2)                  # TEST DATA
 
     ########### Assigning features and predictor variables
 
