@@ -219,18 +219,28 @@ def _preprocess_data(data):
     X = X.drop(['Placement_-_Time','Confirmation_-_Time','Arrival_at_Pickup_-_Time',
                        'Pickup_-_Time'],axis = 1)
     
-    selected_features_BE = ['No_Of_Orders', 'Average_Rating',
-    'No_of_Ratings', 'Distance_(KM)', 'Temperature',
-    'Pickup_Long', 'Destination_Lat', 'Is_rider_busy',
-    'Is_platform_busy', 'Is_user_frequent_Moderate',
-    'Is_user_frequent_Occasional']
+    cols = list(X.columns)
+    pmax = 1
+    while (len(cols)>0):
+        p= []
+        X_1 = X[cols]
+        X_1 = sm.add_constant(X_1)
+        model = sm.OLS(y,X_1).fit()
+        p = pd.Series(model.pvalues.values[1:],index = cols)      
+        pmax = max(p)
+        feature_with_p_max = p.idxmax()
+        if(pmax>0.05):
+            cols.remove(feature_with_p_max)
+        else:
+            break
+    selected_features_BE = cols
 
     """
     Dropping features because they are highly correlated
     """
 
-    # selected_features_BE.remove('No_of_Ratings')
-    # selected_features_BE.remove('Is_user_frequent_Moderate')
+    selected_features_BE.remove('No_of_Ratings')
+    selected_features_BE.remove('Is_user_frequent_Moderate')
 
     predict_vector = predict_vector[selected_features_BE]
 
