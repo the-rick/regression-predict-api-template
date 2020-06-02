@@ -70,7 +70,7 @@ def _preprocess_data(data):
     ######### merging datasets
 
     #                                 TRAIN
-    df = pd.merge(riders,train_data,on = 'Rider Id',how='left')
+    df = pd.merge(train_data, riders,on = 'Rider Id',how='left')
          
    ########### Dropping vehicle type because it is always a bike
 
@@ -229,8 +229,8 @@ def _preprocess_data(data):
     Dropping features because they are highly correlated
     """
 
-    selected_features_BE = selected_features_BE.remove('No_of_Ratings')
-    selected_features_BE = selected_features_BE.remove('Is_user_frequent_Moderate')
+    selected_features_BE.remove('No_of_Ratings')
+    selected_features_BE.remove('Is_user_frequent_Moderate')
 
     predict_vector = predict_vector[selected_features_BE]
 
