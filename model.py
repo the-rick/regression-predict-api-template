@@ -59,8 +59,188 @@ def _preprocess_data(data):
     # ---------------------------------------------------------------
 
     # ----------- Replace this code with your own preprocessing steps --------
-    predict_vector = feature_vector_df[['Pickup Lat','Pickup Long',
-                                        'Destination Lat','Destination Long']]
+    predict_vector = feature_vector_df
+
+    ############ Test dataset
+    # test_data = pd.read_csv('https://raw.githubusercontent.com/the-rick/regression_notebook_team17/master/data/Test.csv')
+    
+    ########### Rider dataset
+    riders = pd.read_csv('https://raw.githubusercontent.com/the-rick/regression_notebook_team17/master/data/Riders.csv')
+    
+    ########### Train dataset
+    train_data = pd.read_csv('https://raw.githubusercontent.com/the-rick/regression_notebook_team17/master/data/Train.csv')
+    
+    ######### merging datasets
+
+    #                                 TEST
+    # df2 = d = pd.merge(test_data,riders,on = 'Rider Id',how='left')
+
+    #                                 TRAIN
+    df = pd.merge(riders,train_data,on = 'Rider Id',how='left')
+         
+   ########### Dropping vehicle type because it is always a bike
+
+    def drop_vehicle_type(input_df):
+        input_df = input_df.drop(["Vehicle Type"], axis=1)
+        return input_df
+    
+    df = drop_vehicle_type(df)                   # TRAIN DATA
+    # df2 = drop_vehicle_type(df2)                  # TEST DATA
+
+    ########### Assigning features and predictor variables
+
+    #                               TRAIN DATA
+    X = df.drop(["Time from Pickup to Arrival"],axis=1)
+    y = df.iloc[:,-1].values
+
+    """
+    Dropping these features because the test data does not contain them
+
+    """
+
+    X = X.drop(['Arrival at Destination - Day of Month','Arrival at Destination - Weekday (Mo = 1)', 'Arrival at Destination - Time'], axis=1)
+
+    ########### Dealing with missing values
+
+    """
+    PREDICTION VARIABLE
+    Dropping missing values for Time from Pickup to Arrival
+    """
+    y = y[~np.isnan(y)]
+
+    """
+    PRECIPITATION
+    Missing values will be replaced with 0. The zero will mean that there was no precipitation 
+    during that day.
+    """
+
+    X["Precipitation in millimeters"] = X["Precipitation in millimeters"].fillna(0)  #TRAIN DATA
+
+    """
+
+   TEMPERATURE
+   Filling NaN values with the mean of the column
+    """
+    def impute_mean(series):
+        return series.fillna(series.mean())
+    
+    X["Temperature"] = round(X.Temperature.transform(impute_mean),1)     # TRAIN DATA
+
+    """
+    Drop the riders from the Rider dataset who do not have information on the train data and test data
+    Number of rows will go from 21237 to 21201 in train dataset
+    Number of rows will go from 7206 to 7068 in test dataset
+    """
+
+    def drop_nan_rows(input_df):
+        input_df = input_df.dropna(how='any', subset=['User Id'])
+        return input_df
+    
+    X = drop_nan_rows(X)                    # TRAIN DATA
+
+    ############ Categorising data and encoding it
+
+    """
+    RIDER ID
+   
+    Creating a count variable that counts the number of times each rider ID appeArs,
+    then breaking the counts values into categorical values to reduce the number of dummy variables
+    """
+
+
+                                                  
+                        # TRAIN DATA
+    X["Counts"] = X.groupby("Rider Id")["Order No"].transform('count')
+    X["Is_rider_busy"] = X["Counts"].apply(lambda x: 1 if x >= 50 else 0)
+
+    """
+    Dropping the counts and Rider Id columns, after utilizing them
+    """
+
+    X = X.drop(["Rider Id","Counts"],axis = 1)              # TRAIN DATA
+
+    """
+    USER  ID
+  
+    Doing the same method we did for the rider ID variable to reduce the number of dummy variables
+    A user will be a frequent user if they are returning for the second time or more,
+    if a user appears once on the list, they are regarded as non-frequent
+    """
+
+    def user_id_cat(input_df):
+        input_df["Counts"] = input_df.groupby("User Id")["Order No"].transform('count')
+
+        input_df["Is_user_frequent"] = input_df["Counts"].apply(lambda x: "Frequent" if x >= 135 
+                                    else "Moderate" if 10 < x < 135 
+                                    else  "Occasional" )
+        return input_df
+
+    X = user_id_cat(X)
+
+    """
+    Dropping the counts and User Id columns, after utilizing them
+    """
+    X = X.drop(["User Id","Counts"],axis = 1)               # TRAIN DATA
+
+    """
+    PLATFORM TYPE
+  
+    Because on platform type 3 was used for approximately 85.16% of the orders placed in the dataset, it will be regarded as the
+    busiest platform, and the others will be regarded as not busy.
+    """
+
+    def platfor_type(input_df):
+        input_df["Is_platform_busy"] = input_df["Platform Type"].apply(lambda x: 1 if x == 3 
+                                    else 0)
+        return input_df
+    
+    X = platfor_type(X)                   # TRAIN DATA
+
+    """
+    Dropping Platform Type column after utilizing it
+    """
+    X = X.drop(["Platform Type"],axis = 1)               # TRAIN DATA
+
+    """
+    ORDER NO
+   
+    Dropping Order No column because  it is unique for every row
+    """
+    X = X.drop(["Order No"],axis=1)                        # TRAIN DATA
+
+    """
+    Making sure column naming is consistent by replacing whitespaces with an underscore
+    """
+
+    X.columns = [col.replace(" ","_") for col in X.columns]                   # TRAIN DATA
+
+    ########### Encoding features
+
+    objList = X.select_dtypes(include = "object").columns            #finding features with type object
+    objList
+    excluding_time = ['Personal_or_Business','Is_user_frequent']
+
+    X = pd.get_dummies(X, columns=excluding_time,drop_first = True)
+    
+    ########## dropping just to test the models
+    X = X.drop(['Placement_-_Time','Confirmation_-_Time','Arrival_at_Pickup_-_Time',
+                       'Pickup_-_Time'],axis = 1)
+    
+    selected_features_BE = ['No_Of_Orders', 'Average_Rating',
+    'No_of_Ratings', 'Distance_(KM)', 'Temperature',
+    'Pickup_Long', 'Destination_Lat', 'Is_rider_busy',
+    'Is_platform_busy', 'Is_user_frequent_Moderate',
+    'Is_user_frequent_Occasional']
+
+    """
+    Dropping features because they are highly correlated
+    """
+
+    selected_features_BE = selected_features_BE.remove('No_of_Ratings')
+    selected_features_BE = selected_features_BE.remove('Is_user_frequent_Moderate')
+
+    predict_vector = predict_vector[selected_features_BE]
+
     # ------------------------------------------------------------------------
 
     return predict_vector
