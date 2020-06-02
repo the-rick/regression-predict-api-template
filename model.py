@@ -70,7 +70,7 @@ def _preprocess_data(data):
     ######### merging datasets
 
     #                                 TRAIN
-    df = pd.merge(riders,train_data,on = 'Rider Id',how='left')
+    df = pd.merge(train_data, riders,on = 'Rider Id',how='left')
          
    ########### Dropping vehicle type because it is always a bike
 
