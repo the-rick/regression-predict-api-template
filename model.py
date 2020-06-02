@@ -27,6 +27,7 @@ import pandas as pd
 import pickle
 import json
 import statsmodels.api as sm
+from sklearn.preprocessing import StandardScaler
 
 def _preprocess_data(data):
     """Private helper function to preprocess data for model prediction.
@@ -60,18 +61,20 @@ def _preprocess_data(data):
     # ---------------------------------------------------------------
 
     # ----------- Replace this code with your own preprocessing steps --------
-    predict_vector = feature_vector_df
+    predict_vector = feature_vector_df[['No_Of_Orders', 'Average_Rating',
+    'No_of_Ratings', 'Distance_(KM)', 'Temperature', 'Pickup_Long', 'Destination_Lat', 'Is_rider_busy',
+    'Is_platform_busy', 'Is_user_frequent_Moderate', 'Is_user_frequent_Occasional']]
     
     ########### Rider dataset
-    riders = pd.read_csv('https://raw.githubusercontent.com/the-rick/regression_notebook_team17/master/data/Riders.csv')
+    # riders = pd.read_csv('https://raw.githubusercontent.com/the-rick/regression_notebook_team17/master/data/Riders.csv')
     
     ########### Train dataset
-    train_data = pd.read_csv('https://raw.githubusercontent.com/the-rick/regression_notebook_team17/master/data/Train.csv')
+    # train_data = pd.read_csv('https://raw.githubusercontent.com/the-rick/regression_notebook_team17/master/data/Train.csv')
     
     ######### merging datasets
 
     #                                 TRAIN
-    df = pd.merge(train_data, riders,on = 'Rider Id',how='left')
+    # df = pd.merge(train_data, riders,on = 'Rider Id',how='left')
          
    ########### Dropping vehicle type because it is always a bike
 
@@ -79,12 +82,12 @@ def _preprocess_data(data):
         input_df = input_df.drop(["Vehicle Type"], axis=1)
         return input_df
     
-    df = drop_vehicle_type(df)                   # TRAIN DATA
+    predict_vector = drop_vehicle_type(predict_vector)                   # TRAIN DATA
 
     ########### Assigning features and predictor variables
 
     #                               TRAIN DATA
-    X = df.drop(["Time from Pickup to Arrival"],axis=1)
+    X = predict_vector.drop(["Time from Pickup to Arrival"],axis=1)
     y = df.iloc[:,-1].values
 
     """
@@ -234,20 +237,32 @@ def _preprocess_data(data):
             cols.remove(feature_with_p_max)
         else:
             break
+
     selected_features_BE = cols
+
+    # selected_features_BE = ['No_Of_Orders', 'Average_Rating', 'No_of_Ratings',
+    # 'Distance_(KM)', 'Temperature', 'Pickup_Long', 'Destination_Lat',
+    # 'Is_rider_busy', 'Is_platform_busy',
+    # 'Is_user_frequent_Moderate', 'Is_user_frequent_Occasional']
+
 
     """
     Dropping features because they are highly correlated
     """
+    # selected_features_BE.append(['Pickup_-_Day_of_Month', 'Pickup_-_Weekday_(Mo_=_1)'])
+    selected_features_BE = [x for x in selected_features_BE if x != 'No_of_Ratings' and x != 'Is_user_frequent_Moderate']
 
-    selected_features_BE.remove('No_of_Ratings')
-    selected_features_BE.remove('Is_user_frequent_Moderate')
-
-    predict_vector = predict_vector[selected_features_BE]
+    X_copy_scaling = X[selected_features_BE]
+    
+    sc = StandardScaler()
+    X_copy_scaling.iloc[:,0:6]= sc.fit_transform(X_copy_scaling.iloc[:,0:6])
+    print("selected_features_BE   " + str(len(selected_features_BE)))
+    predict_vector = X_copy_scaling[selected_features_BE]
 
     # ------------------------------------------------------------------------
 
     return predict_vector
+
 
 def load_model(path_to_model:str):
     """Adapter function to load our pretrained model into memory.

@@ -211,8 +211,7 @@ selected_features_BE = cols
 Dropping features because they are highly correlated
 """
 
-selected_features_BE.remove('No_of_Ratings')
-selected_features_BE.remove('Is_user_frequent_Moderate')
+selected_features_BE = [x for x in selected_features_BE if x != 'No_of_Ratings' and x != 'Is_user_frequent_Moderate']
 
 X_copy_scaling = X[selected_features_BE]
 
